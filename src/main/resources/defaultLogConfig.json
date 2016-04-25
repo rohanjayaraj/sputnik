@@ -1,0 +1,18 @@
+{
+    "workflows": [{
+            "workflowName": "test",
+            "workflowFilename": "normalUser1Workflow.json"
+        }],
+    "commonConfigs" : {
+            "parallel" : false
+        },
+    "producers": [{
+            "type": "kafka",
+            "broker.server": "10.10.88.133",
+            "broker.port": 7660,
+            "topic": "/streams:sputnik",
+            "sync": false,
+            "flatten" : false,
+            "key_prefix" : "key"
+    }]
+}

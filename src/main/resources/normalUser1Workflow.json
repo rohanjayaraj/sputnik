@@ -1,0 +1,75 @@
+{
+    "repeatWorkflow": true,
+    "stepRunMode" : "random",
+
+    "eventFrequency": 0,
+    "varyEventFrequency": true,
+    
+    "varyRepeatFrequency": true,
+    "timeBetweenRepeat": 0,
+    
+    "steps": [{
+            "config": [{
+                    "timestamp": "nowTimestamp()",
+                    "system": "alphaNumeric(10)",
+                    "actor": "bob",
+                    "action": "ENTER",
+                    "objects": ["Building 1"],
+                    "location": "45.5,44.3",
+                    "message": "Entered Building 1",
+                    "repeat-array": [
+                        "repeat(0,3)",
+                            {
+                                "thing1": "alpha(10)",
+                                "thing2": "alpha(10)"
+                            }
+                        ],
+                    "optional" : true,
+                    "random-array": ["array(english(10),0,5)"],
+                    "nested-node": {
+                        "level2prop" : "english(10)",
+                        "level2" : {
+                            "level3prop" : "english(10)",
+                            "level3" : {
+                                "level4prop" : "english(10)",
+                                "level4" : {
+                                    "level5prop": "alphaNumeric(100)",
+                                    "level5arraymap": [
+                                        "repeat(0,3)",
+                                            {
+                                                "key1": "english(10)",
+                                                "key2": "integer()"
+                                            }
+                                        ],
+                                    "level5array": ["array(english(10),0,10)"]
+                                }
+                            }
+                        }
+                    }
+                }],
+            "duration": 0
+        },{
+            "config": [{
+                    "timestamp": "nowTimestamp()",
+                    "system": "AD",
+                    "actor": "bob",
+                    "action": "LOGIN",
+                    "objects": ["workstation1"],
+                    "location": null,
+                    "message": "Logged in to workstation 1"
+                }],
+            "duration": 0
+        }, {
+            "config": [{
+                    "timestamp": "nowTimestamp()",
+                    "system": "AUDIT",
+                    "actor": "bob",
+                    "action": "random(\"PRINT\",\"OPEN\",\"COPY\")",
+                    "objects": ["/data/file1.txt","/share/mystuff/file2.txt"],
+                    "location": null,
+                    "message": "Printed /data/file1.txt"
+                }],
+            "duration": 0
+        }]
+}
+

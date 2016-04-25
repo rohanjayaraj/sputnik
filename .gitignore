@@ -1,0 +1,31 @@
+## maven generated
+target/
+
+## eclipse generated
+.settings/
+.project
+.classpath
+maven-eclipse.xml
+test-output
+
+## intellij generated
+.idea/
+*.iml
+*.iws
+*.ipr
+
+## binaries - no binaries please. committing these files makes the repositories fatty
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+## OS generated files
+.DS_Store
+.DS_Store?
+ehthumbs.db
+Thumbs.db
