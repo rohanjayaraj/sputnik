@@ -1,6 +1,6 @@
 {
-    "repeatWorkflow": true,
-    "stepRunMode" : "random",
+    "repeatWorkflow": true  ,
+    "stepRunMode" : "sequential",
 
     "eventFrequency": 0,
     "varyEventFrequency": true,

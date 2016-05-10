@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.mapr.data.sputnik.config.JSONConfigReader;
 import com.mapr.data.sputnik.config.SimulationConfig;
+import com.mapr.data.sputnik.ext.StatsReporter;
 import com.mapr.data.sputnik.log.EventLogger;
 import com.mapr.data.sputnik.log.HBaseLogger;
 import com.mapr.data.sputnik.log.JsonDBLogger;
@@ -38,6 +39,7 @@ public class JsonDataGenerator {
         try {
             log.debug("Creating Simulation Runner using Simulation Config [ " + simConfigString + " ]");
             SimulationConfig simConfig = getSimConfig();
+            StatsReporter.createInstance(simConfig.getCommonConfigs());
             List<EventLogger> loggers = new ArrayList<>();
             for (Map<String, Object> elProps : simConfig.getProducers()) {
                 String elType = (String) elProps.get("type");

@@ -30,9 +30,14 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mapr.data.sputnik.ext.LoggerStatistics;
+import com.mapr.data.sputnik.ext.StatsReporter;
 import com.mapr.data.sputnik.util.RandomDataGen;
 
 public class HBaseLogger extends Configured implements EventLogger {
@@ -60,8 +65,12 @@ public class HBaseLogger extends Configured implements EventLogger {
 	private final int keyuniqlen = 3;
 	private String keyuniq;
 
-	private HTable table = null;
+	private volatile HTable table = null;
 	private HBaseAdmin admin;
+	
+	private final Timer logTime;
+	private final Counter logCount;
+	private final Histogram logSize;
 
 
 	public HBaseLogger(Map<String, Object> props) throws IOException {
@@ -88,6 +97,9 @@ public class HBaseLogger extends Configured implements EventLogger {
 		rdg = RandomDataGen.getInstance();
 		this.bufferwrite = props.get("bufferwrite")!=null?(boolean)props.get("bufferwrite"):false;
 		keyuniq = rdg.randAlphanum(keyuniqlen, false);
+		this.logTime = StatsReporter.getInstance().getRegistry().timer(MetricRegistry.name(HBaseLogger.class.getSimpleName(), "inserttime"));
+		this.logCount = StatsReporter.getInstance().getRegistry().counter(MetricRegistry.name(HBaseLogger.class.getSimpleName(), "msgcount"));
+		this.logSize = StatsReporter.getInstance().getRegistry().histogram(MetricRegistry.name(HBaseLogger.class.getSimpleName(), "rowsize"));
 
 		try {
 			if(admin == null){
@@ -234,14 +246,18 @@ public class HBaseLogger extends Configured implements EventLogger {
 				JsonNode fieldValue = node.get(fieldName);
 				p.add(cfBytes, Bytes.toBytes(fieldName), Bytes.toBytes(fieldValue.toString()));
 			}
-			long start = System.nanoTime();
+			long start = System.currentTimeMillis();
+			final Timer.Context context = logTime.time();
 			hTable.put(p);
-			long end = System.nanoTime();
+			context.close();
+			logCount.inc();
+			logSize.update(event.length());
+			long end = System.currentTimeMillis();
 			stats.incrMsgCount();
 			stats.addInsertTime(start,end);
 			stats.addMsgSize(event.length());
 		}catch(Exception e){
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 
 	}
@@ -265,6 +281,7 @@ public class HBaseLogger extends Configured implements EventLogger {
 			try {
 				writeMetaKey();
 				table.close();
+				
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

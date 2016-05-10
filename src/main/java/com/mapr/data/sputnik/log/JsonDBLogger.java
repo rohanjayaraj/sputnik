@@ -11,7 +11,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ojai.Document;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.mapr.data.sputnik.ext.LoggerStatistics;
+import com.mapr.data.sputnik.ext.StatsReporter;
 import com.mapr.data.sputnik.util.RandomDataGen;
 import com.mapr.db.Admin;
 import com.mapr.db.FamilyDescriptor;
@@ -41,6 +46,10 @@ public class JsonDBLogger implements EventLogger {
 	private LoggerStatistics stats;
 
 	private volatile Table table = null;
+	
+	private final Timer logTime;
+	private final Counter logCount;
+	private final Histogram logSize;
 
 	public JsonDBLogger(Map<String, Object> props) {
 		this.tablename =  (String)props.get("tablename");
@@ -55,6 +64,11 @@ public class JsonDBLogger implements EventLogger {
 		this.bufferwrite = props.get("bufferwrite")!=null?(boolean)props.get("bufferwrite"):false;
 		keyuniq = rdg.randAlphanum(3, false);
 		this.stats = new LoggerStatistics();
+		
+		this.logTime = StatsReporter.getInstance().getRegistry().timer(MetricRegistry.name(JsonDBLogger.class.getSimpleName(), "inserttime"));
+		this.logCount = StatsReporter.getInstance().getRegistry().counter(MetricRegistry.name(JsonDBLogger.class.getSimpleName(), "msgcount"));
+		this.logSize = StatsReporter.getInstance().getRegistry().histogram(MetricRegistry.name(JsonDBLogger.class.getSimpleName(), "rowsize"));
+
 	}
 
 	private void createTable(){
@@ -96,15 +110,19 @@ public class JsonDBLogger implements EventLogger {
 			if(msgIdx == Long.MAX_VALUE - 1) { msgIdx = 0; keyuniq = rdg.randAlphanum(3, false);}
 			String key = keyprefix+":"+keyuniq+":"+String.format("%016x", msgIdx++);
 			document.setId(key);
-			long start = System.nanoTime();
-			table.insert(document);
-			long end = System.nanoTime();
+			long start = System.currentTimeMillis();
+			final Timer.Context context = logTime.time();
+			table.insertOrReplace(document);
+			context.close();
+			logCount.inc();
+			logSize.update(event.length());
+			long end = System.currentTimeMillis();
 			stats.incrMsgCount();
 			stats.addInsertTime(start,end);
 			stats.addMsgSize(event.length());
 		} catch (DBException | IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 

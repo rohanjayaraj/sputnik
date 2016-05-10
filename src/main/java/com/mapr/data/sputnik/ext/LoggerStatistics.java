@@ -24,7 +24,7 @@ public class LoggerStatistics {
 	}
 	
 	public void addInsertTime(long start, long end){
-		double difference = (end - start)/1000000;
+		double difference = (end - start);
 		totalInsertTime+=difference;
 	}
 	

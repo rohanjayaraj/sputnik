@@ -1,10 +1,15 @@
 {
     "workflows": [{
             "workflowName": "test",
-            "workflowFilename": "normalUser1Workflow.json"
+            "workflowFilename": "config6.json"
         }],
     "commonConfigs" : {
-            "parallel" : false
+            "parallel" : false,
+            "consolePeriod" : 0,
+            "graphitehost" : "10.10.88.136",
+            "graphitePortString" : "2003",
+            "graphitePeriod" : 30,
+            "graphitePrefix" : "maprqa.sputnik.archerx"
         },
     "producers": [{
             "type": "kafka",
@@ -14,5 +19,14 @@
             "sync": false,
             "flatten" : false,
             "key_prefix" : "key"
+    },{
+            "type": "hbase",
+            "tablename": "/tables/tblbsputnik",
+            "family" : "foo",
+            "numsplits" : 5
+    },{
+            "type": "jsondb",
+            "tablename": "/tables/tbljsputnik",
+            "numsplits" : 5
     }]
 }

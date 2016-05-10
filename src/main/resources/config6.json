@@ -1,0 +1,24 @@
+{
+    "repeatWorkflow": true  ,
+    "stepRunMode" : "sequential",
+
+    "eventFrequency": 0,
+    "varyEventFrequency": true,
+    
+    "varyRepeatFrequency": true,
+    "timeBetweenRepeat": 0,
+    
+    "steps": [{
+            "config": [{
+                    "timestamp": "nowTimestamp()",
+                    "system": "AUDIT",
+                    "actor": "bob",
+                    "action": "random(\"PRINT\",\"OPEN\",\"COPY\")",
+                    "objects": ["/data/file1.txt","/share/mystuff/file2.txt"],
+                    "location": null,
+                    "message": "Printed /data/file1.txt"
+                }],
+            "duration": 0
+        }]
+}
+

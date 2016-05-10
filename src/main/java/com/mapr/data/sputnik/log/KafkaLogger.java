@@ -19,7 +19,12 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
 import com.mapr.data.sputnik.ext.LoggerStatistics;
+import com.mapr.data.sputnik.ext.StatsReporter;
 import com.mapr.data.sputnik.util.JsonUtils;
 
 /**
@@ -45,6 +50,10 @@ public class KafkaLogger implements EventLogger {
     private final Properties props = new Properties();
     private JsonUtils jsonUtils;
     private LoggerStatistics stats;
+    
+    private final Timer logTime;
+	private final Counter logCount;
+	private final Histogram logSize;
     
     public KafkaLogger(Map<String, Object> props) {
         String brokerHost = (String) props.get(BROKER_SERVER_PROP_NAME);
@@ -72,6 +81,10 @@ public class KafkaLogger implements EventLogger {
         this.flatten = props.get("flatten")!=null?(Boolean) props.get("flatten"):false;
         this.jsonUtils = new JsonUtils();
         this.stats = new LoggerStatistics();
+        
+        this.logTime = StatsReporter.getInstance().getRegistry().timer(MetricRegistry.name(KafkaLogger.class.getSimpleName(), "inserttime"));
+		this.logCount = StatsReporter.getInstance().getRegistry().counter(MetricRegistry.name(KafkaLogger.class.getSimpleName(), "msgcount"));
+		this.logSize = StatsReporter.getInstance().getRegistry().histogram(MetricRegistry.name(KafkaLogger.class.getSimpleName(), "rowsize"));
     }
 
     @Override
@@ -88,7 +101,8 @@ public class KafkaLogger implements EventLogger {
         
         ProducerRecord<String, String> producerRecord = new ProducerRecord<>(
         		topic, (partition!=-1?partition:(int)(msgIdx%pInfo.size())), (key+msgIdx++), output);
-        long start = System.nanoTime();
+        long start = System.currentTimeMillis();
+        final Timer.Context context = logTime.time();
 		if (sync) {
             try {
                 producer.send(producerRecord).get();
@@ -99,7 +113,10 @@ public class KafkaLogger implements EventLogger {
         } else {
             producer.send(producerRecord);
         }
-		long end = System.nanoTime();
+		context.close();
+		logCount.inc();
+		logSize.update(event.length());
+		long end = System.currentTimeMillis();
 		stats.incrMsgCount();
 		stats.addInsertTime(start,end);
 		stats.addMsgSize(event.length());
